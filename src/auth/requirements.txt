@@ -1,0 +1,5 @@
+jedi     
+pylint 
+Flask  
+Flask-MySQLdb
+PyJWT          
