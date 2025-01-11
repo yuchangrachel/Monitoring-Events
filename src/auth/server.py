@@ -12,7 +12,7 @@ server.config["MYSQL_PASSWORD"] = os.environ.get("MYSQL_PASSWORD")
 server.config["MYSQL_DB"] = os.environ.get("MYSQL_DB")
 server.config["MYSQL_PORT"] = os.environ.get("MYSQL_PORT")
 
-@server.route("/login", method=["POST"])
+@server.route("/login", methods=["POST"])
 def login():
     auth = request.authorization
     if not auth:
@@ -28,27 +28,27 @@ def login():
         email = user_row[0]
         password = user_row[1]
 
-        if auth.username != email r auth.password != password:
+        if auth.username != email or auth.password != password:
             return "Invalid credentials", 401
         else:
             return createJWT(auth.username, os.environ.get("JWT_SECRET"), True)
     else:
         return "Invalid crendentials", 401
 
-def createJWT(username, secret, authz):
+def createJWT(username, secret, isAdmin):
     return jwt.encode({
         "username": username,
         "exp": datetime.datetime.now(tz=datetime.timezone.utc)+datetime.timedelta(days=1), # after 24h
         "iat": datetime.datetime.utcnow(),
-        "admin": authz
+        "admin": isAdmin
     },
     secret,
     algorithm="HS256"
     )
 
-@server.route("/validate", method=["POST"])
+@server.route("/validate", methods=["POST"])
 def validate():
-    encoded_jwt = request.header["Authorization"]
+    encoded_jwt = request.headers["Authorization"]
     if not encoded_jwt:
         return "Missing credentials", 401
     encoded_jwt = encoded_jwt.split(" ")[1] # Bearer TOKEN
@@ -64,4 +64,5 @@ def validate():
 
 
 if __name__ == "__main__":
-    server.run(host="0.0.0.0", port=5000)
+    # listen to all IP in k8s
+    server.run(host="0.0.0.0", port=5001)
